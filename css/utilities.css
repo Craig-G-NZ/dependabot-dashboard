@@ -1,0 +1,4 @@
+/* Layout utilities */
+.hidden { display: none !important; }
+.text-danger { color: var(--danger); }
+.text-muted { color: var(--ink-muted); }

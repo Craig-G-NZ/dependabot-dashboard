@@ -1,0 +1,17 @@
+name = "dependabot-dashboard"
+main = "worker/index.js"
+compatibility_date = "2025-05-30"
+
+workers_dev = false
+preview_urls = false
+
+[assets]
+directory = "."
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[vars]
+GITHUB_CLIENT_ID = "your_github_oauth_client_id"
+CANONICAL_HOST = "alerts.gillfamily.co.nz"
+
+# Set GITHUB_CLIENT_SECRET in Cloudflare Dashboard only (encrypted secret).

@@ -1,0 +1,17 @@
+worker/
+wrangler.toml
+wrangler.toml.example
+package.json
+package-lock.json
+node_modules/
+.wrangler/
+.git/
+.gitignore
+README.md
+.env
+*.md
+node_modules/**
+.wrangler/**
+.git/**
+fixtures/
+.github/

@@ -1,0 +1,26 @@
+name = "dependabot-dashboard"
+main = "worker/index.js"
+compatibility_date = "2025-05-30"
+
+# Only serve on custom domain routes — never on *.workers.dev or preview URLs
+workers_dev = false
+preview_urls = false
+
+[assets]
+directory = "."
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# Client ID is public (sent to the browser). Deployed on every `wrangler deploy`.
+# Replace with your GitHub OAuth App client ID before deploy.
+[vars]
+GITHUB_CLIENT_ID = "Ov23litAAGskzmIaBMDv"
+# Public site URL — OAuth and API only accept this host
+CANONICAL_HOST = "alerts.gillfamily.co.nz"
+
+# Workers custom domain (not a zone route pattern)
+[[routes]]
+pattern = "alerts.gillfamily.co.nz"
+custom_domain = true
+
+# GITHUB_CLIENT_SECRET — set only via `wrangler secret put` / dashboard. Never commit.

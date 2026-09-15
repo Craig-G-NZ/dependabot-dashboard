@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <script src="/js/theme-init.js"></script>
+  <title>Signing in · Alerts</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/utilities.css">
+  <link rel="stylesheet" href="/css/app.css?v=2">
+</head>
+<body>
+  <div class="app-shell app-shell--compact">
+    <div class="app-shell__accent" aria-hidden="true"></div>
+    <main class="app-main app-main--center">
+      <p id="status" class="text-meta">Signing in with GitHub…</p>
+    </main>
+  </div>
+  <script>window.ALERTS_SCRIPTS = ['theme.js', 'auth.js', 'github-api.js', 'alerts.js'];</script>
+  <script src="/js/bootstrap.js?v=3"></script>
+  <script>
+    document.addEventListener('alerts-ready', async function () {
+      const status = document.getElementById('status');
+      try {
+        const ok = await window.Alerts.auth.handleOAuthCallback();
+        window.location.replace(ok ? '/#/' : '/');
+      } catch (err) {
+        status.textContent = err.message;
+        status.classList.add('text-danger');
+        setTimeout(function () {
+          window.location.replace('/?auth_error=' + encodeURIComponent(err.message));
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>
