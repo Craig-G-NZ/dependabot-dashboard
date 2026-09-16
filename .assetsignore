@@ -13,5 +13,4 @@ README.md
 node_modules/**
 .wrangler/**
 .git/**
-fixtures/
 .github/

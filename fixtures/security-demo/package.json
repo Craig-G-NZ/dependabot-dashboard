@@ -1,8 +1,0 @@
-{
-  "name": "security-demo-fixture",
-  "private": true,
-  "description": "Intentional vulnerable dependency for Dependabot alert demos",
-  "dependencies": {
-    "lodash": "4.17.20"
-  }
-}
