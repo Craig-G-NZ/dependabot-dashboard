@@ -34,7 +34,10 @@ window.Alerts = window.Alerts || {};
   }
 
   function typeChip(type) {
-    return `<span class="chip chip--type">${escapeHtml(typeLabel(type))}</span>`;
+    const safe = ['dependabot', 'code_scanning', 'secret_scanning'].includes(type)
+      ? type
+      : 'dependabot';
+    return `<span class="chip chip--${safe}">${escapeHtml(typeLabel(type))}</span>`;
   }
 
   function renderSummary(summary, { scoped = false } = {}) {

@@ -33,6 +33,11 @@
   --low: #0f766e;
   --unk: #64748b;
 
+  /* Alert type chips — cool palette, away from severity warm/teal/gray */
+  --type-dependabot: #1d4ed8;
+  --type-code: #6d28d9;
+  --type-secret: #a21caf;
+
   --radius-xl: 20px;
   --radius-lg: 14px;
   --radius-md: 10px;
@@ -75,7 +80,10 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
-}
+
+  --type-dependabot: #60a5fa;
+  --type-code: #c4b5fd;
+  --type-secret: #f0abfc;
 
 *,
 *::before,
@@ -739,12 +747,30 @@ h1 {
 .chip--medium { background: color-mix(in srgb, var(--med) 16%, transparent); color: var(--med); border-color: color-mix(in srgb, var(--med) 30%, transparent); }
 .chip--low { background: color-mix(in srgb, var(--low) 16%, transparent); color: var(--low); border-color: color-mix(in srgb, var(--low) 30%, transparent); }
 .chip--unknown { background: color-mix(in srgb, var(--unk) 16%, transparent); color: var(--unk); border-color: color-mix(in srgb, var(--unk) 30%, transparent); }
-.chip--type {
-  background: var(--brand-soft);
-  color: var(--brand);
-  border-color: color-mix(in srgb, var(--brand) 28%, transparent);
+
+.chip--dependabot,
+.chip--code_scanning,
+.chip--secret_scanning {
   text-transform: none;
   letter-spacing: 0;
+}
+
+.chip--dependabot {
+  background: color-mix(in srgb, var(--type-dependabot) 16%, transparent);
+  color: var(--type-dependabot);
+  border-color: color-mix(in srgb, var(--type-dependabot) 30%, transparent);
+}
+
+.chip--code_scanning {
+  background: color-mix(in srgb, var(--type-code) 16%, transparent);
+  color: var(--type-code);
+  border-color: color-mix(in srgb, var(--type-code) 30%, transparent);
+}
+
+.chip--secret_scanning {
+  background: color-mix(in srgb, var(--type-secret) 16%, transparent);
+  color: var(--type-secret);
+  border-color: color-mix(in srgb, var(--type-secret) 30%, transparent);
 }
 
 .filters {

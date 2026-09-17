@@ -1,6 +1,6 @@
 /** Load OAuth client ID from Worker env (/api/config), then load app scripts. */
 (function () {
-  const VERSION = '4';
+  const VERSION = '5';
   const scripts = window.ALERTS_SCRIPTS || [
     'theme.js',
     'auth.js',
