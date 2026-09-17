@@ -222,23 +222,41 @@ window.Alerts = window.Alerts || {};
     `;
   }
 
+  function formatCodeLocation(loc) {
+    if (!loc) return '—';
+    const lineRange =
+      loc.end_line && loc.end_line !== loc.start_line
+        ? `${loc.start_line}-${loc.end_line}`
+        : String(loc.start_line);
+    return `${loc.path}:${lineRange}`;
+  }
+
+  function formatToolLabel(tool) {
+    if (!tool?.name) return '—';
+    if (!tool.version) return tool.name;
+    return `${tool.name} · ${tool.version}`;
+  }
+
   function renderCodeScanningDetail(alert) {
     const raw = alert.raw || {};
     const rule = raw.rule || {};
     const loc = raw.most_recent_instance?.location;
-    const path = loc ? `${loc.path}:${loc.start_line}${loc.end_line && loc.end_line !== loc.start_line ? `-${loc.end_line}` : ''}` : '—';
+    const path = formatCodeLocation(loc);
     const message = raw.most_recent_instance?.message?.text || '';
+    const helpBlock = rule.help
+      ? `<pre class="detail-desc">${escapeHtml(String(rule.help).slice(0, 4000))}</pre>`
+      : '';
     return `
       <dl class="detail-grid">
         <div><dt>Rule</dt><dd><code>${escapeHtml(rule.id || rule.name || '—')}</code></dd></div>
-        <div><dt>Tool</dt><dd>${escapeHtml(raw.tool?.name || '—')}${raw.tool?.version ? ` · ${escapeHtml(raw.tool.version)}` : ''}</dd></div>
+        <div><dt>Tool</dt><dd>${escapeHtml(formatToolLabel(raw.tool))}</dd></div>
         <div><dt>Location</dt><dd><code>${escapeHtml(path)}</code></dd></div>
         <div><dt>Severity</dt><dd>${severityChip(alert.severity)}</dd></div>
       </dl>
       <div class="detail-prose">
         <h3>Finding</h3>
         <p>${escapeHtml(message || rule.full_description || rule.description || alert.title)}</p>
-        ${rule.help ? `<pre class="detail-desc">${escapeHtml(String(rule.help).slice(0, 4000))}</pre>` : ''}
+        ${helpBlock}
       </div>
     `;
   }

@@ -49,7 +49,6 @@ window.Alerts = window.Alerts || {};
     if (!global.auth.isLoggedIn()) {
       if (title) title.textContent = 'Repositories';
       const info = global.auth.getOAuthSetupInfo?.() || {};
-      // ensure config-loaded client id
       if (window.ALERTS_CONFIG) {
         info.clientId = window.ALERTS_CONFIG.clientId || info.clientId;
         info.redirectUri =
@@ -77,7 +76,7 @@ window.Alerts = window.Alerts || {};
   function wireListInteractions(root) {
     root.querySelectorAll('.alert-row').forEach((row) => {
       const open = () => {
-        const id = row.getAttribute('data-alert-id');
+        const id = row.dataset.alertId;
         const alert = state.alerts.find((a) => a.id === id);
         if (!alert) return;
         location.hash = global.data.routeAlert(alert.type, alert.owner, alert.name, alert.number);
@@ -98,9 +97,7 @@ window.Alerts = window.Alerts || {};
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const owner = btn.getAttribute('data-owner');
-        const name = btn.getAttribute('data-name');
-        location.hash = global.data.routeRepo(owner, name);
+        location.hash = global.data.routeRepo(btn.dataset.owner, btn.dataset.name);
       });
     });
 
@@ -122,7 +119,7 @@ window.Alerts = window.Alerts || {};
 
     root.querySelectorAll('.severity-filter').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const sev = btn.getAttribute('data-severity');
+        const sev = btn.dataset.severity;
         state.filters.severity = state.filters.severity === sev ? '' : sev;
         paint();
       });
@@ -141,6 +138,66 @@ window.Alerts = window.Alerts || {};
       listRoot.innerHTML = global.render.renderAlertList(alerts);
       wireListInteractions(listRoot.parentElement || root);
     }
+  }
+
+  function findListedAlert(route) {
+    return state.alerts.find(
+      (a) =>
+        a.type === route.type &&
+        a.owner === route.owner &&
+        a.name === route.name &&
+        String(a.number) === String(route.number)
+    );
+  }
+
+  async function loadAlertDetail(route) {
+    const cacheKey = `${route.type}:${route.owner}/${route.name}:${route.number}`;
+    if (state.detail?._cacheKey === cacheKey) return state.detail;
+
+    const listed = findListedAlert(route);
+    const detail = await global.data.fetchAlertDetail(
+      route.type,
+      route.owner,
+      route.name,
+      route.number
+    );
+    if (listed && !detail.html_url) detail.html_url = listed.html_url;
+    detail._cacheKey = cacheKey;
+    state.detail = detail;
+    return detail;
+  }
+
+  async function paintAlertView(main, route) {
+    main.innerHTML = `<p class="empty-state">Loading alert…</p>`;
+    try {
+      const detail = await loadAlertDetail(route);
+      main.innerHTML = global.render.renderAlertDetail(detail);
+      wireListInteractions(main);
+    } catch (err) {
+      main.innerHTML = `<section class="empty-state"><p class="text-danger">${global.render.escapeHtml(err.message)}</p><a class="btn btn-ghost" href="${global.data.routeHome()}">Back</a></section>`;
+    }
+    updateStatus();
+  }
+
+  function paintAlertList(main, route) {
+    if (route.view === 'repo') {
+      const alerts = state.alerts.filter((a) => a.repo === route.repo);
+      const summary = global.data.summarize(alerts);
+      main.innerHTML = global.render.renderRepoView(route.repo, applyFilters(alerts), summary);
+    } else {
+      const summary = global.data.summarize(state.alerts);
+      main.innerHTML = global.render.renderHome(
+        applyFilters(state.alerts),
+        summary,
+        state.filters
+      );
+    }
+
+    main.querySelectorAll('.severity-filter').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.severity === state.filters.severity);
+    });
+    wireListInteractions(main);
+    updateStatus();
   }
 
   async function paint() {
@@ -170,59 +227,14 @@ window.Alerts = window.Alerts || {};
     }
 
     if (route.view === 'alert') {
-      main.innerHTML = `<p class="empty-state">Loading alert…</p>`;
-      try {
-        const cacheKey = `${route.type}:${route.owner}/${route.name}:${route.number}`;
-        let detail = state.detail?._cacheKey === cacheKey ? state.detail : null;
-        if (!detail) {
-          const listed = state.alerts.find(
-            (a) =>
-              a.type === route.type &&
-              a.owner === route.owner &&
-              a.name === route.name &&
-              String(a.number) === String(route.number)
-          );
-          detail = await global.data.fetchAlertDetail(
-            route.type,
-            route.owner,
-            route.name,
-            route.number
-          );
-          if (listed && !detail.html_url) detail.html_url = listed.html_url;
-        }
-        detail._cacheKey = cacheKey;
-        state.detail = detail;
-        main.innerHTML = global.render.renderAlertDetail(detail);
-        wireListInteractions(main);
-      } catch (err) {
-        main.innerHTML = `<section class="empty-state"><p class="text-danger">${global.render.escapeHtml(err.message)}</p><a class="btn btn-ghost" href="${global.data.routeHome()}">Back</a></section>`;
-      }
-      updateStatus();
+      await paintAlertView(main, route);
       return;
     }
 
-    if (route.view === 'repo') {
-      const alerts = state.alerts.filter((a) => a.repo === route.repo);
-      const summary = global.data.summarize(alerts);
-      const filtered = applyFilters(alerts);
-      main.innerHTML = global.render.renderRepoView(route.repo, filtered, summary);
-    } else {
-      const summary = global.data.summarize(state.alerts);
-      const filtered = applyFilters(state.alerts);
-      main.innerHTML = global.render.renderHome(filtered, summary, state.filters);
-    }
-
-    main.querySelectorAll('.severity-filter').forEach((btn) => {
-      btn.classList.toggle('is-active', btn.getAttribute('data-severity') === state.filters.severity);
-    });
-
-    wireListInteractions(main);
-    updateStatus();
+    paintAlertList(main, route);
   }
 
   function updateStatus() {
-    const el = $('refresh-status');
-    // status lives only if we add it; optional — use user label title
     if (!state.refreshedAt) return;
     const btn = $('btn-refresh');
     if (btn) {
