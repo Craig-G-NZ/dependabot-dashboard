@@ -235,7 +235,7 @@ window.Alerts = window.Alerts || {};
       <div class="detail-prose">
         <h3>Finding</h3>
         <p>${escapeHtml(message || rule.full_description || rule.description || alert.title)}</p>
-        ${rule.help ? `<pre class="detail-desc">${escapeHtml(String(rule.help).replace(/<[^>]+>/g, '').slice(0, 4000))}</pre>` : ''}
+        ${rule.help ? `<pre class="detail-desc">${escapeHtml(String(rule.help).slice(0, 4000))}</pre>` : ''}
       </div>
     `;
   }

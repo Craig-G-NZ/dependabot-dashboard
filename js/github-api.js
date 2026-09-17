@@ -1,18 +1,50 @@
 window.Alerts = window.Alerts || {};
 
 (function (global) {
-  const API_BASE = 'https://api.github.com';
+  const API_ORIGIN = 'https://api.github.com';
+  const REPO_NAME_RE = /^[A-Za-z0-9_.-]+$/;
 
   function getToken() {
     return global.auth.getToken();
+  }
+
+  function sanitizeRepoName(value, label) {
+    const name = String(value ?? '');
+    if (!REPO_NAME_RE.test(name)) {
+      throw new Error(`Invalid ${label}`);
+    }
+    return name;
+  }
+
+  function sanitizeAlertNumber(value) {
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 1) {
+      throw new Error('Invalid alert number');
+    }
+    return n;
+  }
+
+  function repoApiPath(owner, repo, suffix = '') {
+    const safeOwner = sanitizeRepoName(owner, 'owner');
+    const safeRepo = sanitizeRepoName(repo, 'repository');
+    return `/repos/${encodeURIComponent(safeOwner)}/${encodeURIComponent(safeRepo)}${suffix}`;
   }
 
   async function githubFetch(path, options = {}) {
     const token = getToken();
     if (!token) throw new Error('Not authenticated');
 
+    // Keep requests on api.github.com only (blocks host/path redirection).
+    const url = new URL(path, API_ORIGIN);
+    if (url.origin !== API_ORIGIN) {
+      throw new Error('Invalid API host');
+    }
+    if (url.pathname.includes('/../') || url.pathname.includes('/..')) {
+      throw new Error('Invalid API path');
+    }
+
     const { signal, allowStatuses = [], ...fetchOptions } = options;
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await fetch(url.toString(), {
       ...fetchOptions,
       signal,
       headers: {
@@ -40,10 +72,12 @@ window.Alerts = window.Alerts || {};
     const results = [];
     let page = 1;
     const perPage = 100;
-    const joiner = path.includes('?') ? '&' : '?';
+    const url = new URL(path, API_ORIGIN);
 
     while (true) {
-      const batch = await githubFetch(`${path}${joiner}per_page=${perPage}&page=${page}`, options);
+      url.searchParams.set('per_page', String(perPage));
+      url.searchParams.set('page', String(page));
+      const batch = await githubFetch(`${url.pathname}${url.search}`, options);
       if (!batch || !Array.isArray(batch) || batch.length === 0) break;
       results.push(...batch);
       if (batch.length < perPage) break;
@@ -54,40 +88,46 @@ window.Alerts = window.Alerts || {};
   }
 
   async function getAllRepos(options = {}) {
-    return githubFetchAll('/user/repos?affiliation=owner,collaborator,organization_member&sort=updated', options);
+    return githubFetchAll(
+      '/user/repos?affiliation=owner,collaborator,organization_member&sort=updated',
+      options
+    );
   }
 
   async function listDependabotAlerts(owner, repo, options = {}) {
-    return githubFetchAll(
-      `/repos/${owner}/${repo}/dependabot/alerts?state=open`,
-      { ...options, allowStatuses: [403, 404, 422] }
-    );
+    return githubFetchAll(repoApiPath(owner, repo, '/dependabot/alerts?state=open'), {
+      ...options,
+      allowStatuses: [403, 404, 422],
+    });
   }
 
   async function listCodeScanningAlerts(owner, repo, options = {}) {
-    return githubFetchAll(
-      `/repos/${owner}/${repo}/code-scanning/alerts?state=open`,
-      { ...options, allowStatuses: [403, 404, 422] }
-    );
+    return githubFetchAll(repoApiPath(owner, repo, '/code-scanning/alerts?state=open'), {
+      ...options,
+      allowStatuses: [403, 404, 422],
+    });
   }
 
   async function listSecretScanningAlerts(owner, repo, options = {}) {
-    return githubFetchAll(
-      `/repos/${owner}/${repo}/secret-scanning/alerts?state=open`,
-      { ...options, allowStatuses: [403, 404, 422] }
-    );
+    return githubFetchAll(repoApiPath(owner, repo, '/secret-scanning/alerts?state=open'), {
+      ...options,
+      allowStatuses: [403, 404, 422],
+    });
   }
 
   async function getDependabotAlert(owner, repo, number, options = {}) {
-    return githubFetch(`/repos/${owner}/${repo}/dependabot/alerts/${number}`, options);
+    const n = sanitizeAlertNumber(number);
+    return githubFetch(repoApiPath(owner, repo, `/dependabot/alerts/${n}`), options);
   }
 
   async function getCodeScanningAlert(owner, repo, number, options = {}) {
-    return githubFetch(`/repos/${owner}/${repo}/code-scanning/alerts/${number}`, options);
+    const n = sanitizeAlertNumber(number);
+    return githubFetch(repoApiPath(owner, repo, `/code-scanning/alerts/${n}`), options);
   }
 
   async function getSecretScanningAlert(owner, repo, number, options = {}) {
-    return githubFetch(`/repos/${owner}/${repo}/secret-scanning/alerts/${number}`, options);
+    const n = sanitizeAlertNumber(number);
+    return githubFetch(repoApiPath(owner, repo, `/secret-scanning/alerts/${n}`), options);
   }
 
   function getUser(options = {}) {
