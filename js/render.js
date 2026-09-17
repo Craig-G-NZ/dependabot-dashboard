@@ -224,11 +224,11 @@ window.Alerts = window.Alerts || {};
 
   function formatCodeLocation(loc) {
     if (!loc) return '—';
-    const lineRange =
-      loc.end_line && loc.end_line !== loc.start_line
-        ? `${loc.start_line}-${loc.end_line}`
-        : String(loc.start_line);
-    return `${loc.path}:${lineRange}`;
+    let lineRange = String(loc.start_line);
+    if (loc.end_line && loc.end_line !== loc.start_line) {
+      lineRange = loc.start_line + '-' + loc.end_line;
+    }
+    return loc.path + ':' + lineRange;
   }
 
   function formatToolLabel(tool) {
@@ -243,9 +243,11 @@ window.Alerts = window.Alerts || {};
     const loc = raw.most_recent_instance?.location;
     const path = formatCodeLocation(loc);
     const message = raw.most_recent_instance?.message?.text || '';
-    const helpBlock = rule.help
-      ? `<pre class="detail-desc">${escapeHtml(String(rule.help).slice(0, 4000))}</pre>`
-      : '';
+    let helpBlock = '';
+    if (rule.help) {
+      helpBlock =
+        '<pre class="detail-desc">' + escapeHtml(String(rule.help).slice(0, 4000)) + '</pre>';
+    }
     return `
       <dl class="detail-grid">
         <div><dt>Rule</dt><dd><code>${escapeHtml(rule.id || rule.name || '—')}</code></dd></div>
@@ -261,6 +263,19 @@ window.Alerts = window.Alerts || {};
     `;
   }
 
+  function renderLocationItem(loc) {
+    const d = loc.details || loc;
+    const path = d.path || d.location?.path || JSON.stringify(d);
+    return '<li><code>' + escapeHtml(path) + '</code></li>';
+  }
+
+  function renderLocationList(locations) {
+    if (!locations.length) {
+      return '<p class="text-muted">No location details in this response. Open on GitHub for full context.</p>';
+    }
+    return '<ul class="location-list">' + locations.map(renderLocationItem).join('') + '</ul>';
+  }
+
   function renderSecretScanningDetail(alert) {
     const raw = alert.raw || {};
     const locations = Array.isArray(raw.locations) ? raw.locations : [];
@@ -273,17 +288,7 @@ window.Alerts = window.Alerts || {};
       </dl>
       <div class="detail-prose">
         <h3>Locations</h3>
-        ${
-          locations.length
-            ? `<ul class="location-list">${locations
-                .map((loc) => {
-                  const d = loc.details || loc;
-                  const path = d.path || d.location?.path || JSON.stringify(d);
-                  return `<li><code>${escapeHtml(path)}</code></li>`;
-                })
-                .join('')}</ul>`
-            : '<p class="text-muted">No location details in this response. Open on GitHub for full context.</p>'
-        }
+        ${renderLocationList(locations)}
       </div>
     `;
   }
