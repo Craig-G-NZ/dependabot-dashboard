@@ -38,10 +38,10 @@
   --type-code: #6d28d9;
   --type-secret: #a21caf;
 
-  --radius-xl: 20px;
-  --radius-lg: 14px;
-  --radius-md: 10px;
-  --radius-sm: 8px;
+  --radius-xl: 12px;
+  --radius-lg: 8px;
+  --radius-md: 6px;
+  --radius-sm: 4px;
 
   --space-4: 1rem;
   --space-5: 1.25rem;
@@ -84,6 +84,7 @@
   --type-dependabot: #60a5fa;
   --type-code: #c4b5fd;
   --type-secret: #f0abfc;
+}
 
 *,
 *::before,
@@ -711,7 +712,7 @@ h1 {
   gap: 0.4rem;
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   padding: 0.25rem 0.55rem 0.25rem 0.25rem;
   cursor: pointer;
   color: inherit;
@@ -733,7 +734,7 @@ h1 {
 .chip {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   padding: 0.15rem 0.55rem;
   font-size: 0.72rem;
   font-weight: 600;
